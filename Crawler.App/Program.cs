@@ -1,24 +1,49 @@
-﻿// See https://aka.ms/new-console-template for more information
-
+﻿using Crawler.App;
 using Crawler.Application.Abstract;
-using Crawler.IoC;
-using Microsoft.Extensions.Configuration;
+using Crawler.Application.Crawlers.ProductCrawler;
 using Microsoft.Extensions.DependencyInjection;
 
-var configuration = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-    .Build();
+var serviceProvider = Setup.Services();
 
-var services = new ServiceCollection();
-services.AddMongoSettings(configuration);
-services.RegisterServices();
-services.BuildServiceProvider();
-var serviceProvider = services.BuildServiceProvider();
+var crawlerFactory = serviceProvider.GetService<ICrawlerFactory>();
+if (crawlerFactory == null)
+{
+    throw new ArgumentNullException(nameof(crawlerFactory));
+}
 
-var productCrawler = serviceProvider.GetService<IProductCrawler>();
+var cancellationTokenSource = new CancellationTokenSource();
+Console.CancelKeyPress += (sender, eventArgs) =>
+{
+    Console.WriteLine("stopping...");
+    cancellationTokenSource.Cancel();
+    eventArgs.Cancel = true;
+};
 
-var result = await productCrawler.Start();
-Console.WriteLine(result ? "success": "failed");
+var crawlers = new List<string>
+{
+    nameof(ProductCrawler)
+};
 
-Console.WriteLine("Hello, World!");
+try
+{
+    var tasks = crawlers.Select(crawlerName => RunCrawlerAsync(crawlerName, cancellationTokenSource.Token));
+    await Task.WhenAll(tasks);
+}
+catch (Exception e)
+{
+    Console.WriteLine(e);
+}
+
+async Task RunCrawlerAsync(string crawlerName, CancellationToken cancellationToken)
+{
+    var crawler = crawlerFactory.Generate(crawlerName);
+    if (crawler == null)
+    {
+        throw new ArgumentNullException(nameof(crawlerName));
+    }
+
+    while (!cancellationToken.IsCancellationRequested)
+    {
+        await crawler.Start(cancellationToken);
+    }
+}

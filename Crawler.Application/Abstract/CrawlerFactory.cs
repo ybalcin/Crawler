@@ -1,24 +1,36 @@
 using Crawler.Application.Crawlers.ProductCrawler;
-using Crawler.Domain.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Crawler.Application.Abstract;
 
 public interface ICrawlerFactory
 {
-    Crawler Generate(string key);
+    ICrawler Generate(string key);
 }
 
 public class CrawlerFactory : ICrawlerFactory
 {
-    private readonly IProductCrawlerRepository _productRepository;
+    private readonly IServiceProvider _serviceProvider;
 
-    public CrawlerFactory(IProductCrawlerRepository productRepository)
+    public CrawlerFactory(IServiceProvider serviceProvider)
     {
-        _productRepository = productRepository;
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     }
 
-    public Crawler Generate(string key)
+    public ICrawler Generate(string key)
     {
-        return new ProductCrawler(_productRepository);
+        switch (key)
+        {
+            case nameof(ProductCrawler):
+                var c = _serviceProvider.GetService<IProductCrawler>();
+                if (c == null)
+                {
+                    throw new ArgumentNullException(nameof(ProductCrawler));
+                }
+                return c;
+            
+            default:
+                throw new NotImplementedException($"{key} is not implemented");
+        }
     }
 }

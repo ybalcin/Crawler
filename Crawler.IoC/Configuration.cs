@@ -1,4 +1,5 @@
 using Crawler.Application.Abstract;
+using Crawler.Application.Crawlers;
 using Crawler.Application.Crawlers.ProductCrawler;
 using Crawler.Data.Configuration;
 using Crawler.Data.Repositories;
@@ -21,10 +22,25 @@ public static class Configuration
         });
     }
 
+    public static IServiceCollection AddCrawlerSettings(this IServiceCollection services, IConfiguration configuration)
+    {
+        return services.Configure<CrawlerSettings>(opts =>
+        {
+            var value = configuration.GetSection(nameof(CrawlerSettings)).Get<List<CrawlerSetting>>();
+            if (value == null)
+            {
+                throw new NotImplementedException();
+            }
+
+            opts.Settings = value;
+        });
+    }
+
     public static IServiceCollection RegisterServices(this IServiceCollection services)
     {
         // register services
 
+        services.AddScoped<ICrawlerFactory, CrawlerFactory>();
         services.AddScoped<IProductCrawlerRepository, ProductCrawlerRepository>();
         services.AddScoped<IProductCrawler, ProductCrawler>();
         

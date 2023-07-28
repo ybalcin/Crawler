@@ -21,20 +21,44 @@ public abstract class MongoRepositoryBase<TEntity> : IRepository<TEntity, string
         Collection = db.GetCollection<TEntity>(typeof(TEntity).Name.ToLowerInvariant());
     }
 
-    public virtual async Task<TEntity> AddAsync(TEntity entity)
+    public virtual async Task<bool> AddAsync(TEntity entity, CancellationToken cancellationToken)
     {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+        
         var options = new InsertOneOptions {BypassDocumentValidation = false};
-        await Collection.InsertOneAsync(entity, options);
-        return entity;
+        try
+        {
+            await Collection.InsertOneAsync(entity, options, cancellationToken);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
     }
 
-    public virtual async Task<bool> AddRangeAsync(IEnumerable<TEntity> entities)
+    public virtual async Task<bool> AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken)
     {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
+        
         var entityList = entities.ToList();
         var writeList = entityList.Select(entity => new InsertOneModel<TEntity>(entity)).Cast<WriteModel<TEntity>>().ToList();
 
         var options = new BulkWriteOptions {IsOrdered = false, BypassDocumentValidation = false};
-        return (await Collection.BulkWriteAsync(writeList, options)).IsAcknowledged;
+        try
+        {
+            return (await Collection.BulkWriteAsync(writeList, options, cancellationToken)).IsAcknowledged;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
     }
 
     public IQueryable<TEntity> Get(Expression<Func<TEntity, bool>>? predicate = null)

@@ -1,8 +1,8 @@
-using Crawler.Application.Abstract;
 using Crawler.Application.Extensions;
 using Crawler.Domain.Interfaces;
 using Crawler.Domain.Models;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace Crawler.Application.Crawlers.ProductCrawler;
@@ -11,24 +11,38 @@ public class ProductCrawler : Abstract.Crawler, IProductCrawler
 {
     private readonly IProductCrawlerRepository _repository;
 
-    public ProductCrawler(IProductCrawlerRepository repository)
+    public ProductCrawler(IProductCrawlerRepository repository, IOptions<CrawlerSettings> setting) : base(setting)
     {
-        _repository = repository;
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     }
 
-    public async Task<bool> Start()
+    public async Task<bool> Start(CancellationToken cancellationToken = default)
     {
         using var client = new HttpClient();
         client.Timeout = TimeSpan.FromSeconds(60);
 
-        var resp = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get,
-            "https://crawling-coding-challenge-properti-ag.vercel.app/"));
-        if (!resp.IsSuccessStatusCode)
+        HttpResponseMessage resp;
+        try
         {
+            resp = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, Url), cancellationToken);
+            if (!resp.IsSuccessStatusCode)
+            {
+                return false;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine($"request is cancelled for {Url}");
             return false;
         }
 
-        var respBody = await resp.Content.ReadAsStringAsync();
+        if (!resp.IsSuccessStatusCode)
+        {
+            Console.WriteLine($"received non-OK HTTP status for request {Url}, status: {resp.StatusCode}");
+            return false;
+        }
+
+        var respBody = await resp.Content.ReadAsStringAsync(cancellationToken);
 
         var htmlDocument = new HtmlDocument();
         htmlDocument.LoadHtml(respBody);
@@ -38,36 +52,46 @@ public class ProductCrawler : Abstract.Crawler, IProductCrawler
         var productListing = JsonConvert.DeserializeObject<ProductListingPropsDto>(scriptTag.InnerHtml);
         if (productListing == null)
         {
+            Console.WriteLine("products not found");
             return false;
         }
 
         var tasks = new List<Task<Product?>>();
         foreach (var productDto in productListing.Props.PageProps.Listings)
         {
-            tasks.Add(FindAndFillProduct(productDto));
+            tasks.Add(FindAndFillProduct(productDto, cancellationToken));
         }
 
-        var products = await Task.WhenAll(tasks);
+        var products = (await Task.WhenAll(tasks)).Where(p => p != null).Cast<Product>().ToList();
 
-        var productList = products.Where(product => product != null).Cast<Product>().ToList();
-
-        return await _repository.AddRangeAsync(productList);
+        return await _repository.AddRangeAsync(products, cancellationToken);
     }
 
-    private async Task<Product?> FindAndFillProduct(ProductDto dto)
+    private async Task<Product?> FindAndFillProduct(ProductDto dto, CancellationToken cancellationToken)
     {
         using var client = new HttpClient();
         client.Timeout = TimeSpan.FromSeconds(60);
 
-        var url = $"https://crawling-coding-challenge-properti-ag.vercel.app/{dto.Id}";
+        var requestUri = $"{Url}/{dto.Id}";
 
-        var resp = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, url));
+        HttpResponseMessage resp;
+        try
+        {
+            resp = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, requestUri), cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine($"request is cancelled for {requestUri}");
+            return null;
+        }
+        
         if (!resp.IsSuccessStatusCode)
         {
+            Console.WriteLine($"received non-OK HTTP status for request {requestUri}, status: {resp.StatusCode}");
             return null;
         }
 
-        var respBody = await resp.Content.ReadAsStringAsync();
+        var respBody = await resp.Content.ReadAsStringAsync(cancellationToken);
 
         var htmlDocument = new HtmlDocument();
         htmlDocument.LoadHtml(respBody);
@@ -78,7 +102,7 @@ public class ProductCrawler : Abstract.Crawler, IProductCrawler
         var name = htmlDocument.FindDivInnerHtmlByClass("name");
         var email = htmlDocument.FindDivInnerHtmlByClass("email");
         var phone = htmlDocument.FindDivInnerHtmlByClass("phone");
-        
+
         var p = new Product
         {
             PId = dto.Id,
@@ -92,7 +116,7 @@ public class ProductCrawler : Abstract.Crawler, IProductCrawler
             Phone = phone
         };
 
-        Console.WriteLine($"Crawled: {p}");
+        Console.WriteLine($"crawled: {p}");
 
         return p;
     }
