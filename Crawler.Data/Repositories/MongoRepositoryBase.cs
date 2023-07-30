@@ -21,7 +21,7 @@ public abstract class MongoRepositoryBase<TEntity> : IRepository<TEntity, string
         Collection = db.GetCollection<TEntity>(typeof(TEntity).Name.ToLowerInvariant());
     }
 
-    public virtual async Task<bool> AddAsync(TEntity entity, CancellationToken cancellationToken)
+    public virtual async Task<bool> AddAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
         {
@@ -40,7 +40,7 @@ public abstract class MongoRepositoryBase<TEntity> : IRepository<TEntity, string
         }
     }
 
-    public virtual async Task<bool> AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken)
+    public virtual async Task<bool> AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
         {

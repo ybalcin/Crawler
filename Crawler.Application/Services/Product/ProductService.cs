@@ -8,7 +8,7 @@ public class ProductService : IProductService
 
     public ProductService(IProductRepository repository)
     {
-        _repository = repository;
+        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     }
 
     public IEnumerable<Domain.Models.Product> GetAll()
@@ -16,7 +16,7 @@ public class ProductService : IProductService
         return _repository.Get().ToList();
     }
 
-    public Task<bool> AddRangeAsync(IEnumerable<Domain.Models.Product> entities, CancellationToken cancellationToken)
+    public Task<bool> AddRangeAsync(IEnumerable<Domain.Models.Product> entities, CancellationToken cancellationToken = default)
     {
         return _repository.AddRangeAsync(entities, cancellationToken);
     }

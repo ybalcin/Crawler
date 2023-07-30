@@ -1,7 +1,9 @@
 ﻿using Crawler.App;
 using Crawler.Application.Abstract;
+using Crawler.Application.Crawlers;
 using Crawler.Application.Crawlers.ProductCrawler;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 var serviceProvider = Setup.Services();
 
@@ -19,10 +21,12 @@ Console.CancelKeyPress += (sender, eventArgs) =>
     eventArgs.Cancel = true;
 };
 
-var crawlers = new List<string>
+var crawlerSettings = serviceProvider.GetService<IOptions<CrawlerSettings>>();
+if (crawlerSettings == null)
 {
-    nameof(ProductCrawler)
-};
+    throw new ArgumentNullException(nameof(crawlerSettings));
+}
+var crawlers = crawlerSettings.Value.Settings.Select(s => s.Key).ToList();
 
 try
 {

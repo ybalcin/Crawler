@@ -8,12 +8,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Content Include="..\.dockerignore">
-        <Link>.dockerignore</Link>
-      </Content>
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\Crawler.Application\Crawler.Application.csproj" />
       <ProjectReference Include="..\Crawler.IoC\Crawler.IoC.csproj" />
     </ItemGroup>
