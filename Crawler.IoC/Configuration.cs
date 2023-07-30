@@ -26,12 +26,8 @@ public static class Configuration
     {
         return services.Configure<CrawlerSettings>(opts =>
         {
-            var value = configuration.GetSection(nameof(CrawlerSettings)).Get<List<CrawlerSetting>>();
-            if (value == null)
-            {
-                throw new NotImplementedException();
-            }
-
+            var value = configuration.GetSection(nameof(CrawlerSettings)).Get<List<CrawlerSetting>>() ??
+                        throw new NotImplementedException();
             opts.Settings = value;
         });
     }
@@ -39,11 +35,10 @@ public static class Configuration
     public static IServiceCollection RegisterServices(this IServiceCollection services)
     {
         // register services
-
         services.AddScoped<ICrawlerFactory, CrawlerFactory>();
         services.AddScoped<IProductCrawlerRepository, ProductCrawlerRepository>();
         services.AddScoped<IProductCrawler, ProductCrawler>();
-        
+
         return services;
     }
 }

@@ -37,10 +37,6 @@ catch (Exception e)
 async Task RunCrawlerAsync(string crawlerName, CancellationToken cancellationToken)
 {
     var crawler = crawlerFactory.Generate(crawlerName);
-    if (crawler == null)
-    {
-        throw new ArgumentNullException(nameof(crawlerName));
-    }
 
     while (!cancellationToken.IsCancellationRequested)
     {

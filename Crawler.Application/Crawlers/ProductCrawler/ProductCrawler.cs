@@ -2,16 +2,18 @@ using Crawler.Application.Extensions;
 using Crawler.Domain.Interfaces;
 using Crawler.Domain.Models;
 using HtmlAgilityPack;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 
 namespace Crawler.Application.Crawlers.ProductCrawler;
 
-public class ProductCrawler : Abstract.Crawler, IProductCrawler
+public class ProductCrawler : Abstract.Crawler<ProductCrawler>, IProductCrawler
 {
     private readonly IProductCrawlerRepository _repository;
 
-    public ProductCrawler(IProductCrawlerRepository repository, IOptions<CrawlerSettings> setting) : base(setting)
+    public ProductCrawler(IProductCrawlerRepository repository, IOptions<CrawlerSettings> setting,
+        ILogger<ProductCrawler> logger) : base(setting, logger)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
     }
@@ -32,13 +34,14 @@ public class ProductCrawler : Abstract.Crawler, IProductCrawler
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine($"request is cancelled for {Url}");
+            Logger.LogError("request is cancelled for {Url}", Url);
             return false;
         }
 
         if (!resp.IsSuccessStatusCode)
         {
-            Console.WriteLine($"received non-OK HTTP status for request {Url}, status: {resp.StatusCode}");
+            Logger.LogError("received non-OK HTTP status for request {Url}, status: {resp.StatusCode}", Url,
+                resp.StatusCode);
             return false;
         }
 
@@ -52,7 +55,7 @@ public class ProductCrawler : Abstract.Crawler, IProductCrawler
         var productListing = JsonConvert.DeserializeObject<ProductListingPropsDto>(scriptTag.InnerHtml);
         if (productListing == null)
         {
-            Console.WriteLine("products not found");
+            Logger.LogError("products not found");
             return false;
         }
 
@@ -81,13 +84,14 @@ public class ProductCrawler : Abstract.Crawler, IProductCrawler
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine($"request is cancelled for {requestUri}");
+            Logger.LogError("request is cancelled for {requestUri}", requestUri);
             return null;
         }
-        
+
         if (!resp.IsSuccessStatusCode)
         {
-            Console.WriteLine($"received non-OK HTTP status for request {requestUri}, status: {resp.StatusCode}");
+            Logger.LogError("received non-OK HTTP status for request {requestUri}, status: {resp.StatusCode}",
+                requestUri, resp.StatusCode);
             return null;
         }
 
@@ -116,7 +120,7 @@ public class ProductCrawler : Abstract.Crawler, IProductCrawler
             Phone = phone
         };
 
-        Console.WriteLine($"crawled: {p}");
+        Logger.LogInformation("crawled: {p}", p);
 
         return p;
     }
