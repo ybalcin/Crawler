@@ -1,8 +1,6 @@
-using Crawler.Application.Crawlers.ProductCrawler;
 using Crawler.IoC;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace Crawler.App;
 
@@ -17,14 +15,12 @@ public static class Setup
 
         var services = new ServiceCollection();
         services.AddMongoSettings(configuration);
+        services.RegisterCommonServices();
         services.AddCrawlerSettings(configuration);
-        services.RegisterServices();
-        services.AddLogging(cfg =>
-        {
-            cfg.AddConsole();
-        }).AddTransient<ProductCrawler>();
-        
+        services.RegisterCrawlerServices();
+        services.RegisterCrawlerLogger();
         services.BuildServiceProvider();
+        
         return services.BuildServiceProvider();
     }
 }

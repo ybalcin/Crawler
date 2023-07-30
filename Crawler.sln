@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Application", "Application"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crawler.Application", "Crawler.Application\Crawler.Application.csproj", "{59A0ACA6-A32D-49B0-9645-513B905B4441}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Crawler.API", "Crawler.API\Crawler.API.csproj", "{41B973EE-D8A5-4D03-B58C-97F5A8E7947D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,6 +31,7 @@ Global
 		{E3007ED4-439E-4220-B242-E2F7C7AE427D} = {DD2AD794-A388-402B-8D25-BB7877108C95}
 		{C69CC658-7272-4202-8FF2-A50CA10ECDE4} = {E01920D2-E2AE-40DA-A9F7-3DF67DF10BEA}
 		{59A0ACA6-A32D-49B0-9645-513B905B4441} = {8FF42899-94E2-49F3-9065-C3BA36A1A9B4}
+		{41B973EE-D8A5-4D03-B58C-97F5A8E7947D} = {DD2AD794-A388-402B-8D25-BB7877108C95}
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D8DDA3E4-765F-46F7-AC88-640F3D7500F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -51,5 +54,9 @@ Global
 		{59A0ACA6-A32D-49B0-9645-513B905B4441}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{59A0ACA6-A32D-49B0-9645-513B905B4441}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{59A0ACA6-A32D-49B0-9645-513B905B4441}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41B973EE-D8A5-4D03-B58C-97F5A8E7947D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41B973EE-D8A5-4D03-B58C-97F5A8E7947D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41B973EE-D8A5-4D03-B58C-97F5A8E7947D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41B973EE-D8A5-4D03-B58C-97F5A8E7947D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

@@ -1,5 +1,5 @@
 using Crawler.Application.Extensions;
-using Crawler.Domain.Interfaces;
+using Crawler.Application.Services.Product;
 using Crawler.Domain.Models;
 using HtmlAgilityPack;
 using Microsoft.Extensions.Logging;
@@ -10,12 +10,12 @@ namespace Crawler.Application.Crawlers.ProductCrawler;
 
 public class ProductCrawler : Abstract.Crawler<ProductCrawler>, IProductCrawler
 {
-    private readonly IProductCrawlerRepository _repository;
+    private readonly IProductService _service;
 
-    public ProductCrawler(IProductCrawlerRepository repository, IOptions<CrawlerSettings> setting,
-        ILogger<ProductCrawler> logger) : base(setting, logger)
+    public ProductCrawler(IOptions<CrawlerSettings> setting,
+        ILogger<ProductCrawler> logger, IProductService service) : base(setting, logger)
     {
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _service = service ?? throw new NullReferenceException(nameof(service));
     }
 
     public async Task<bool> Start(CancellationToken cancellationToken = default)
@@ -67,7 +67,7 @@ public class ProductCrawler : Abstract.Crawler<ProductCrawler>, IProductCrawler
 
         var products = (await Task.WhenAll(tasks)).Where(p => p != null).Cast<Product>().ToList();
 
-        return await _repository.AddRangeAsync(products, cancellationToken);
+        return await _service.AddRangeAsync(products, cancellationToken);
     }
 
     private async Task<Product?> FindAndFillProduct(ProductDto dto, CancellationToken cancellationToken)

@@ -1,11 +1,13 @@
 using Crawler.Application.Abstract;
 using Crawler.Application.Crawlers;
 using Crawler.Application.Crawlers.ProductCrawler;
+using Crawler.Application.Services.Product;
 using Crawler.Data.Configuration;
 using Crawler.Data.Repositories;
 using Crawler.Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Crawler.IoC;
 
@@ -31,14 +33,30 @@ public static class Configuration
             opts.Settings = value;
         });
     }
-
-    public static IServiceCollection RegisterServices(this IServiceCollection services)
+    
+    public static IServiceCollection RegisterCommonServices(this IServiceCollection services)
     {
-        // register services
+        services.AddScoped<IProductRepository, ProductRepository>();
+        services.AddScoped<IProductService, ProductService>();
+
+        return services;
+    }
+
+    public static IServiceCollection RegisterCrawlerServices(this IServiceCollection services)
+    {
         services.AddScoped<ICrawlerFactory, CrawlerFactory>();
-        services.AddScoped<IProductCrawlerRepository, ProductCrawlerRepository>();
         services.AddScoped<IProductCrawler, ProductCrawler>();
 
+        return services;
+    }
+
+    public static IServiceCollection RegisterCrawlerLogger(this IServiceCollection services)
+    {
+        services.AddLogging(cfg =>
+        {
+            cfg.AddConsole();
+        }).AddTransient<ProductCrawler>();
+        
         return services;
     }
 }

@@ -5,9 +5,9 @@ using Microsoft.Extensions.Options;
 
 namespace Crawler.Data.Repositories;
 
-public class ProductCrawlerRepository : MongoRepositoryBase<Product>, IProductCrawlerRepository
+public class ProductRepository : MongoRepositoryBase<Product>, IProductRepository
 {
-    public ProductCrawlerRepository(IOptions<MongoSettings> options) : base(options)
+    public ProductRepository(IOptions<MongoSettings> options) : base(options)
     {
     }
 }
